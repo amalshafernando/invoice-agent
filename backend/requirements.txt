@@ -1,4 +1,6 @@
 fastapi>=0.115
+dotenv
+groq>=1.7.0
 uvicorn[standard]>=0.30
 pydantic>=2.7
 httpx>=0.27
