@@ -1,29 +1,28 @@
 
 """Central settings. Everything tunable lives here (policy numbers included)."""
-
 import os
 from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import load_dotenv
 
-ROOT = Path(__file__).resolve().parents[1]  # backend/
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
 
-# Load .env from backend directory.
-# Existing environment variables take precedence over .env.
-load_dotenv(ROOT / ".env")
+ENV_FILE = PROJECT_ROOT / ".env"
 
+load_dotenv(ENV_FILE)
 
 @dataclass
 class Settings:
     # --- Application data ---
     data_dir: Path = Path(
-        os.getenv("DATA_DIR", str(ROOT / "data"))
+        os.getenv("DATA_DIR", str(BACKEND_ROOT / "data"))
     )
 
     # --- ERP configuration ---
     erp_db: str = os.getenv(
-        "ERP_DB", str(ROOT / "data" / "erp.sqlite")
+        "ERP_DB", str(BACKEND_ROOT / "data" / "erp.sqlite")
     )
 
     erp_url: str = os.getenv(
@@ -76,6 +75,16 @@ class Settings:
         "MODEL_STRONG", ""
     )  # e.g. "google_genai:<pro-model>"
 
+    docling_url: str = os.getenv(
+        "DOCLING_URL", "http://127.0.0.1:5001"
+    )
+
+    docling_api_key: str = os.getenv("DOCLING_API_KEY", "")
+
+    docling_timeout_s: float = float(
+        os.getenv("DOCLING_TIMEOUT_S", "120")
+    )
+
     # --- MCP server ---
     mcp_url: str = os.getenv(
         "MCP_URL", "http://127.0.0.1:8002"
@@ -84,7 +93,26 @@ class Settings:
     # --- Checkpoint database ---
     checkpoint_db: str = os.getenv(
         "CHECKPOINT_DB",
-        str(ROOT / "data" / "checkpoints.sqlite")
+        str(BACKEND_ROOT / "data" / "checkpoints.sqlite")
+    )
+
+    # --- Part 3: Episodic Memory, Semantic Matching & HF Guardrails ---
+    memory_db: str = os.getenv(
+        "MEMORY_DB",
+        str(BACKEND_ROOT / "data" / "memory.sqlite")
+    )
+    embedding_provider: str = os.getenv("EMBEDDING_PROVIDER", "local")  # local | hf
+    hf_token: str = os.getenv("HF_TOKEN", "")
+    hf_embed_model: str = os.getenv("HF_EMBED_MODEL", "BAAI/bge-small-en-v1.5")
+    hf_guardrail_model: str = os.getenv(
+        "HF_GUARDRAIL_MODEL", "protectai/deberta-v3-base-prompt-injection-v2"
+    )
+    guardrail_mode: str = os.getenv("GUARDRAIL_MODE", "hybrid")  # hybrid | hf | local
+    semantic_match_threshold: float = float(
+        os.getenv("SEMANTIC_MATCH_THRESHOLD", "0.42")
+    )
+    manual_cost_per_invoice: float = float(
+        os.getenv("MANUAL_COST_PER_INVOICE", "15.0")
     )
 
 

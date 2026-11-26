@@ -20,6 +20,7 @@ class State(TypedDict, total=False):
     duplicate: bool
     lookup_error: bool
     decision: dict
+    precedents: list[dict]
     explanation: str
     human: dict
     status: str
@@ -81,7 +82,14 @@ def build_graph(rt, checkpointer):
         else:
             d = decide(InvoiceExtraction(**s["extraction"]), s.get("po"), s.get("supplier"),
                        s.get("duplicate", False), s.get("lookup_error", False))
-        return {"decision": d.model_dump(), "events": ev(s, f"policy={d.action} {d.reasons}")}
+        precs = []
+        if getattr(rt, "memory", None) is not None and s.get("po"):
+            sup_id = s["po"].get("supplier_id", "")
+            ex = s.get("extraction") or {}
+            summary = f"{ex.get('supplier_name', '')} total={ex.get('total', 0)}"
+            precs = [p.__dict__ for p in rt.memory.recall(sup_id, d.reasons, summary)]
+        return {"decision": d.model_dump(), "precedents": precs,
+                "events": ev(s, f"policy={d.action} {d.reasons} precedents={len(precs)}")}
 
     def route(s: State):
         return {"AUTO_DRAFT": "draft", "HITL_REVIEW": "human",

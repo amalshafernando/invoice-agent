@@ -150,3 +150,19 @@
   - Regex sanitizer වලට අමතරව **Prompt-injection classifier** සහ **egress allow-lists** එක් කිරීම; අමතරව `pgvector` මගින් Procurement Policy / SOP Q&A සඳහා RAG සේවාවක් එක් කිරීම.
 - ❌ **CI/CD Pipeline සහ සම්මුඛ පරීක්ෂණ Demo පුහුණුව**:
   - GitHub Actions මගින් `pytest`, `npm run build`, සහ `evals.run_eval` gate ස්වයංක්‍රීය කිරීම, සහ විනාඩි 6 Demo script (`C01`, `C03`, `C05`, `C08`, `C10`) පුහුණු වීම.
+
+---
+
+## අදියර 9 (කොටස 3): 2026 Enterprise Agentic AI Upgrade (පැය 3කින් ගොඩනැගිය හැකි සැබෑ Agent විශේෂාංග 2)
+
+Part 1 සහ Part 2 මත පදනම්ව, මෙය "toy project" මට්ටමෙන් **Production-Ready Enterprise AI Agent** එකක් බවට පත් කිරීමට 2026 නවතම AI Engineering ප්‍රවණතා 2ක් (100% නොමිලේ සේවා භාවිතයෙන්) එක් කර ඇත:
+
+- ✅ **විශේෂාංගය 1 — `sqlite-vec` Episodic HITL Memory සහ Semantic Line-Item Matching (`backend/app/agent/memory.py`, `policy.py`, `graph.py`, `runtime.py`)**:
+  - **2026 Neuro-Symbolic Pattern**: සරල `==` string matching වෙනුවට `align_lines()` මගින් cosine similarity (`BAAI/bge-small-en-v1.5` හෝ local subword-projection fallback) භාවිතයෙන් invoice lines සහ PO lines semantic ලෙස ගැළපීම (line order වෙනස් වුවද, අමතර විස්තර තිබුණද නිවැරදිව ගැළපේ).
+  - **Cross-Thread Episodic Memory**: මූල්‍ය නිලධාරියෙකු HITL (`CaseReview`) හරහා approve/reject කරන සෑම තීරණයක්ම `sqlite-vec` (`memory.sqlite`) හි vector precedent එකක් ලෙස සුරැකේ. ඊළඟ සමාන invoice එකේදී agent ස්වයංක්‍රීයව පෙර precedents සිහිපත් කර (`recall`) UI හි පෙන්වයි.
+- ✅ **විශේෂාංගය 2 — Hugging Face Prompt-Injection Guardrail සහ Business ROI Engine (`backend/app/mcp_server/guardrail.py`, `sanitize.py`, `api/routes.py`, `frontend/src/pages/Observability.tsx`)**:
+  - **Defense-in-Depth Guardrail**: Regex-only filter එක වෙනුවට pre-trained Hugging Face guardrail model (`protectai/deberta-v3-base-prompt-injection-v2` via free HF Inference API + local structural jailbreak scorer) භාවිතයෙන් indirect prompt injection හඳුනාගැනීම.
+  - **Executive Business ROI Telemetry (`/api/roi`)**: තාක්ෂණික නොවන සමාගම් හිමිකරුවන්ට සෘජුවම පෙනෙන ලෙස Processing Savings (`$15/invoice` manual benchmark vs AI cost), Prevented Fraud/Leakage (`$`), Hours Saved, සහ HITL Precedents Learned ගණනය කර Observability dashboard හි පෙන්වීම.
+- ✅ **කොටස 3 පරීක්ෂණ සහ සිංහල මාර්ගෝපදේශ පොත**:
+  - Unit & Integration Tests: `backend/tests/test_part3.py`
+  - සිංහල මාර්ගෝපදේශ පොත (PDF): `docs/Agentic_AI_Booklet_Part3_Sinhala.pdf`

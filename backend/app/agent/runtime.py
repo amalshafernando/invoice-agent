@@ -13,6 +13,7 @@ from . import telemetry
 from .graph import build_graph
 from .llm import get_llm
 from .mcp_client import McpClient
+from .memory import EpisodicMemory
 from .router import Gateway
 
 
@@ -21,6 +22,7 @@ class Runtime:
     gateway: Gateway
     mcp: McpClient
     graph: object
+    memory: EpisodicMemory | None = None
     docs: dict = field(default_factory=dict)
     cases: dict = field(default_factory=dict)       # case_id -> metadata
 
@@ -54,14 +56,27 @@ class Runtime:
         self.graph.invoke(Command(resume={"decision": decision, "reviewer": reviewer,
                                           "comment": comment}), self._cfg(cid))
         self.cases[cid]["latency_s"] = round(self.cases[cid].get("latency_s", 0) + time.perf_counter() - t0, 4)
-        return self._snapshot(cid)
+        snap = self._snapshot(cid)
+        if self.memory is not None:
+            po = snap.get("po") or {}
+            ex = snap.get("extraction") or {}
+            d = snap.get("decision") or {}
+            self.memory.record_precedent(
+                supplier_id=po.get("supplier_id", ex.get("supplier_name", "UNKNOWN")),
+                reasons=d.get("reasons", []),
+                decision=decision,
+                reviewer=reviewer,
+                comment=comment,
+                summary=f"{ex.get('supplier_name', '')} total={ex.get('total', 0)}",
+            )
+        return snap
 
     def get(self, cid: str) -> dict:
         return self._snapshot(cid)
 
 
 def build_runtime(inproc: bool = False, llm=None, cap_usd: float | None = None,
-                  checkpoint_path: str = ":memory:") -> Runtime:
+                  checkpoint_path: str = ":memory:", memory_path: str = ":memory:") -> Runtime:
     if inproc:                                        # tests / eval: no sockets needed
         from fastapi.testclient import TestClient
         from ..mock_erp.main import app as erp_app
@@ -77,6 +92,7 @@ def build_runtime(inproc: bool = False, llm=None, cap_usd: float | None = None,
     saver = SqliteSaver(conn)
     gw = Gateway(llm or get_llm(), cap_usd)
     mcp = McpClient(mcp_http, erp_http)
-    rt = Runtime(gw, mcp, None)
+    mem = EpisodicMemory(memory_path)
+    rt = Runtime(gw, mcp, None, memory=mem)
     rt.graph = build_graph(rt, saver)
     return rt

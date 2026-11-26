@@ -34,6 +34,14 @@ export default function CaseReview({ id, back }: { id: string; back: () => void 
             {d.line_checks.length === 0 && <tr><td colSpan={4}>No PO lines to compare.</td></tr>}</tbody></table>
         <p>Invoice total <b>{d.invoice_total}</b> · PO total <b>{d.po_total ?? "–"}</b> · Supplier <b>{c.supplier?.name ?? "?"}</b> ({c.supplier?.status ?? "?"})</p>
         <p>Policy reasons: {d.reasons.length ? d.reasons.join(", ") : "none"}</p>
+        {c.precedents && c.precedents.length > 0 && (
+          <div className="warn" style={{ marginTop: 8 }}>
+            <b>Episodic Memory (past HITL precedents):</b>
+            <ul>{c.precedents.map((p) => (
+              <li key={p.id}>[{Math.round(p.similarity * 100)}% match] {p.decision.toUpperCase()} by {p.reviewer} ({p.reason_code}) — {p.comment || p.summary}</li>
+            ))}</ul>
+          </div>
+        )}
         {ex?.notes && <p className="mono">Document notes (untrusted, never fed to the agent): {ex.notes}</p>}
       </div>
       <div>

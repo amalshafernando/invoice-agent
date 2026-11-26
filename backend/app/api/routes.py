@@ -95,6 +95,36 @@ def metrics(rt: Runtime = Depends(get_rt)):
             "touchless_rate": round(by.get("DRAFT_CREATED", 0) / n, 3)}
 
 
+@router.get("/roi")
+def roi(rt: Runtime = Depends(get_rt)):
+    """Part 3: Business ROI & Financial Impact Telemetry for non-technical stakeholders."""
+    cases = [rt.get(c) for c in rt.cases]
+    n = len(cases)
+    total_llm_cost = sum(c.get("cost_usd", 0.0) for c in cases)
+    manual_cost = n * settings.manual_cost_per_invoice
+    processing_savings = max(0.0, manual_cost - total_llm_cost)
+    prevented_leakage = sum(
+        float((c.get("decision") or {}).get("invoice_total") or 0.0)
+        for c in cases
+        if (c.get("decision") or {}).get("action") in ("BLOCK", "ESCALATE")
+    )
+    auto_drafts = sum(1 for c in cases if c.get("status") == "DRAFT_CREATED")
+    hours_saved = round(n * 0.25, 2)  # ~15 min manual 3-way match per invoice
+    precedents_learned = rt.memory.count() if getattr(rt, "memory", None) is not None else 0
+    return {
+        "invoices_processed": n,
+        "manual_benchmark_usd": round(manual_cost, 2),
+        "ai_total_cost_usd": round(total_llm_cost, 6),
+        "processing_savings_usd": round(processing_savings, 2),
+        "prevented_leakage_usd": round(prevented_leakage, 2),
+        "total_business_value_usd": round(processing_savings + prevented_leakage, 2),
+        "touchless_rate": round(auto_drafts / max(1, n), 3),
+        "hours_saved": hours_saved,
+        "precedents_learned": precedents_learned,
+        "guardrail_mode": settings.guardrail_mode,
+    }
+
+
 @router.get("/eval")
 def eval_report():
     f = DATA / "eval_report.json"

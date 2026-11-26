@@ -4,6 +4,8 @@ import re
 import unicodedata
 from typing import Any
 
+from .guardrail import inspect_text
+
 MAX_STR = 500
 _ZERO_WIDTH = dict.fromkeys(map(ord, "\u200b\u200c\u200d\u2060\ufeff"), None)
 _CTRL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
@@ -22,10 +24,15 @@ REDACTED = "[REDACTED:suspected-injection]"
 def clean_string(s: str, findings: list[str]) -> str:
     s = unicodedata.normalize("NFKC", s).translate(_ZERO_WIDTH)   # defeat homoglyph/hidden tricks
     s = _CTRL.sub("", s)
+    gr = inspect_text(s)
+    if gr.flagged:
+        findings.extend(f"guardrail:{lbl}({gr.score})" for lbl in gr.labels)
     for rx in _RX:
         if rx.search(s):
             findings.append(rx.pattern)
             s = rx.sub(REDACTED, s)
+    if gr.flagged and REDACTED not in s:
+        s = f"{REDACTED} {s}"
     return s[:MAX_STR]
 
 

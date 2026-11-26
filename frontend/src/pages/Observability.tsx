@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, EvalReport, Metrics } from "../api";
+import { api, EvalReport, Metrics, RoiMetrics } from "../api";
 import { Badge, Err, Kpi, usd } from "../components";
 
 const pct = (n?: number) => (n === undefined ? "–" : `${(n * 100).toFixed(1)}%`);
@@ -7,11 +7,13 @@ const pct = (n?: number) => (n === undefined ? "–" : `${(n * 100).toFixed(1)}%
 export default function Observability() {
   const [ev, setEv] = useState<EvalReport>({ rows: [] });
   const [m, setM] = useState<Metrics>();
+  const [roi, setRoi] = useState<RoiMetrics>();
   const [audit, setAudit] = useState<string>("…");
   const [err, setErr] = useState("");
   useEffect(() => {
     api.evalReport().then(setEv).catch((e) => setErr(String(e)));
     api.metrics().then(setM).catch((e) => setErr(String(e)));
+    api.roi().then(setRoi).catch((e) => setErr(String(e)));
     api.audit().then((a) => setAudit(a.ok ? `intact (${a.rows} rows)` : "BROKEN")).catch(() => setAudit("unavailable"));
   }, []);
   return (<>
@@ -33,6 +35,13 @@ export default function Observability() {
     <div className="cards">
       <Kpi t="Cases (live)" v={m?.cases ?? "–"} /><Kpi t="Total LLM cost" v={usd(m?.total_cost_usd)} />
       <Kpi t="Avg latency" v={m ? `${m.avg_latency_s}s` : "–"} /><Kpi t="Audit chain" v={audit} />
+    </div>
+    <h3>Business ROI &amp; Part 3 Intelligence</h3>
+    <div className="cards">
+      <Kpi t="Total Business Value" v={roi ? `$${roi.total_business_value_usd.toFixed(2)}` : "–"} />
+      <Kpi t="Prevented Leakage" v={roi ? `$${roi.prevented_leakage_usd.toFixed(2)}` : "–"} />
+      <Kpi t="Hours Saved" v={roi ? `${roi.hours_saved}h` : "–"} />
+      <Kpi t="HITL Precedents Learned" v={roi?.precedents_learned ?? "–"} />
     </div>
   </>);
 }

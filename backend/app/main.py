@@ -11,7 +11,11 @@ from .config import settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.rt = build_runtime(inproc=False, checkpoint_path=settings.checkpoint_db)
+    app.state.rt = build_runtime(
+        inproc=False,
+        checkpoint_path=settings.checkpoint_db,
+        memory_path=settings.memory_db,
+    )
     yield
 
 
