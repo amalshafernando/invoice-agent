@@ -1,7 +1,7 @@
 import pytest
 from pathlib import Path
 
-from app.agent.llm import FakeLLM, Usage
+from app.agent.llm import DocumentExtractionError, FakeLLM, Usage
 from app.agent.pdfgen import render_invoice_pdf
 from app.agent.policy import decide
 from app.agent.runtime import build_runtime
@@ -59,6 +59,37 @@ def test_auto_draft_and_idempotent_rerun(rt):
     assert a["status"] == "DRAFT_CREATED" and a["draft_id"]
     assert any(s["attrs"].get("mcp.tool.name") == "submit_invoice_draft" for s in a["spans"])
     assert any("gen_ai.usage.input_tokens" in s["attrs"] for s in a["spans"])
+
+
+def test_reprocessing_same_invoice_is_blocked(rt):
+    pdf = pdf_of("C01")
+    first = rt.start(pdf)
+    second = rt.start(pdf)
+
+    assert first["status"] == "DRAFT_CREATED"
+    assert second["status"] == "BLOCKED_TICKET"
+    assert second["decision"]["reasons"] == ["DUPLICATE_INVOICE"]
+    assert sum(call["tool"] == "submit_invoice_draft" for call in rt.mcp.log) == 1
+
+
+def test_docling_failure_is_visible_in_case_events(rt):
+    class DoclingUnavailable:
+        name = "langchain"
+
+        def extract(self, _pdf, _tier):
+            raise DocumentExtractionError("Unable to reach the Docling service")
+
+        def explain(self, facts, _tier):
+            return "Extraction failed", Usage(1, 1)
+
+    rt2 = build_runtime(inproc=True, llm=DoclingUnavailable())
+    snapshot = rt2.start(pdf_of("C01"))
+
+    assert snapshot["status"] == "ESCALATED_TICKET"
+    assert any(
+        "extract_failed: Unable to reach the Docling service" in event
+        for event in snapshot["events"]
+    )
 
 
 def test_hitl_pause_then_approve_and_reject(rt):

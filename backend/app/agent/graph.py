@@ -7,6 +7,7 @@ from langgraph.types import Command, interrupt
 
 from ..config import settings
 from ..schemas import InvoiceExtraction
+from .llm import DocumentExtractionError
 from .policy import Decision, decide
 from .router import BudgetExceeded
 
@@ -42,6 +43,8 @@ def build_graph(rt, checkpointer):
             return {"extraction": ex.model_dump(), "events": ev(s, f"extract attempt={s.get('attempt', 0)} conf={ex.extraction_confidence}")}
         except BudgetExceeded as e:
             return {"extraction": None, "events": ev(s, f"budget: {e}")}
+        except DocumentExtractionError as e:
+            return {"extraction": None, "events": ev(s, f"extract_failed: {e}")}
         except Exception as e:                      # schema violation etc.
             return {"extraction": None, "events": ev(s, f"extract_failed: {type(e).__name__}")}
 

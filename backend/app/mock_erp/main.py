@@ -58,7 +58,7 @@ def find_invoice(invoice_no: str, supplier_id: str,
                  p: Principal = Depends(require_scope("read:invoice"))):
     with store.conn() as c:
         rows = c.execute("SELECT draft_id, invoice_no, total FROM invoice_drafts "
-                         "WHERE invoice_no=? AND supplier_id=?",
+                         "WHERE lower(trim(invoice_no))=lower(trim(?)) AND supplier_id=?",
                          (invoice_no, supplier_id)).fetchall()
     return {"@odata.context": "InvoiceDraftSet", "value": [dict(r) for r in rows]}
 

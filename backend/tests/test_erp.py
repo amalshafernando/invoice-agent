@@ -49,6 +49,31 @@ def test_draft_duplicate_invoice_and_suspended_supplier(erp):
                     headers=h).status_code == 409
 
 
+def test_invoice_number_duplicate_ignores_case_and_outer_whitespace(erp):
+    h = bearer(erp, scope="write:invoice_draft")
+    first = erp.post("/odata/InvoiceDraftSet",
+                      json=draft("idem-key-0010", "INV-NORMALIZED"), headers=h)
+    assert first.status_code == 200
+
+    duplicate = erp.post("/odata/InvoiceDraftSet",
+                         json=draft("idem-key-0011", " inv-normalized "), headers=h)
+    assert duplicate.status_code == 409
+
+
+def test_invoice_lookup_normalizes_case_and_outer_whitespace(erp):
+    writer = bearer(erp, scope="write:invoice_draft")
+    reader = bearer(erp, scope="read:invoice")
+    created = erp.post("/odata/InvoiceDraftSet",
+                       json=draft("idem-key-0012", "INV-LOOKUP"), headers=writer)
+    assert created.status_code == 200
+
+    found = erp.get("/odata/InvoiceDraftSet",
+                    params={"invoice_no": " inv-lookup ", "supplier_id": "SUP-OK"},
+                    headers=reader)
+    assert found.status_code == 200
+    assert found.json()["value"][0]["draft_id"] == created.json()["draft_id"]
+
+
 def test_extra_fields_rejected(erp):
     h = bearer(erp, scope="write:invoice_draft")
     bad = {**draft(), "approved": True}

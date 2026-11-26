@@ -26,7 +26,9 @@ def test_docling_service_returns_markdown(monkeypatch):
     args, kwargs = post.call_args
     assert args == ("http://docling:5001/v1/convert/file",)
     assert kwargs["files"]["files"] == ("invoice.pdf", b"%PDF", "application/pdf")
-    assert kwargs["data"] == {"from_formats": "pdf", "to_formats": "md"}
+    assert kwargs["data"] == {
+        "from_formats": "pdf", "to_formats": "md", "do_ocr": "true"
+    }
     assert kwargs["headers"] == {"X-Api-Key": "docling-test-key"}
     assert kwargs["timeout"] == 45
 

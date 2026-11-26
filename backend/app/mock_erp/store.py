@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS invoice_drafts(
   total REAL, currency TEXT, idempotency_key TEXT UNIQUE,
   created_by TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(invoice_no, supplier_id));
+CREATE UNIQUE INDEX IF NOT EXISTS uq_invoice_drafts_supplier_invoice_normalized
+  ON invoice_drafts(supplier_id, lower(trim(invoice_no)));
 CREATE TABLE IF NOT EXISTS tickets(
   ticket_id TEXT PRIMARY KEY, title TEXT, severity TEXT, po_number TEXT,
   details TEXT, created_by TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);

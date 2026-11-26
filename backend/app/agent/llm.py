@@ -20,6 +20,10 @@ If a field is missing, leave it empty and lower extraction_confidence."""
 PRICES = {"cheap": (0.10, 0.40), "strong": (1.25, 5.00)}   # USD / 1M tokens (ILLUSTRATIVE)
 
 
+class DocumentExtractionError(RuntimeError):
+    """A safe, user-visible PDF-to-text conversion failure."""
+
+
 @dataclass
 class Usage:
     input_tokens: int
@@ -83,32 +87,32 @@ class LangChainLLM:
             response = httpx.post(
                 f"{settings.docling_url.rstrip('/')}/v1/convert/file",
                 files={"files": ("invoice.pdf", pdf, "application/pdf")},
-                data={"from_formats": "pdf", "to_formats": "md"},
+                data={"from_formats": "pdf", "to_formats": "md", "do_ocr": "true"},
                 headers=headers,
                 timeout=settings.docling_timeout_s,
             )
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:
-            raise RuntimeError(
+            raise DocumentExtractionError(
                 f"Docling service returned HTTP {exc.response.status_code}"
             ) from exc
         except httpx.RequestError as exc:
-            raise RuntimeError("Unable to reach the Docling service") from exc
+            raise DocumentExtractionError("Unable to reach the Docling service") from exc
 
         try:
             result = response.json()
         except ValueError as exc:
-            raise RuntimeError("Docling service returned invalid JSON") from exc
+            raise DocumentExtractionError("Docling service returned invalid JSON") from exc
 
         if not isinstance(result, dict) or result.get("status") not in {
             "success", "partial_success"
         }:
-            raise RuntimeError("Docling PDF conversion did not succeed")
+            raise DocumentExtractionError("Docling PDF conversion did not succeed")
 
         document = result.get("document")
         markdown = document.get("md_content") if isinstance(document, dict) else None
         if not isinstance(markdown, str) or not markdown.strip():
-            raise RuntimeError("Docling returned no extracted document text")
+            raise DocumentExtractionError("Docling returned no extracted document text")
         return markdown.strip()
 
     def extract(self, pdf: bytes, tier: str):

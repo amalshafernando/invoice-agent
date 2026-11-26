@@ -18,4 +18,4 @@ PDF extraction with Docling Serve:
 3. For a locally running backend, `DOCLING_URL` defaults to `http://127.0.0.1:5001`. With Docker Compose, it defaults to `http://host.docker.internal:5001` so the API container can reach the service running on the host.
 4. Optionally set `DOCLING_API_KEY` and `DOCLING_TIMEOUT_S` if the Docling service requires an API key or more conversion time.
 
-`docling-project/docling-models` contains model assets, not an HTTP service. Docling Serve exposes the `/v1/convert/file` API; the application sends the returned Markdown to LangChain for structured invoice extraction. The CPU image is several gigabytes and downloads on first use.
+`docling-project/docling-models` contains model assets, not an HTTP service. Docling Serve exposes the `/v1/convert/file` API; the application requests OCR and sends the returned Markdown to LangChain for structured invoice extraction. The CPU image is several gigabytes and downloads on first use.
