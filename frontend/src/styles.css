@@ -1,0 +1,21 @@
+:root{--bg:#f4f6fa;--card:#fff;--ink:#1d2430;--mut:#667085;--pri:#0b3d91;--ok:#2e7d32;--warn:#ef6c00;--bad:#c62828;--hitl:#6a1b9a}
+*{box-sizing:border-box}body{margin:0;font:14px/1.5 system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:var(--pri);color:#fff;padding:10px 24px;display:flex;gap:24px;align-items:center}
+header h1{font-size:16px;margin:0}nav a{color:#cfe0ff;margin-right:16px;text-decoration:none;cursor:pointer;padding-bottom:3px}
+nav a.on{color:#fff;border-bottom:2px solid #ffb300}main{padding:20px 24px;max-width:1200px;margin:auto}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--card);border-radius:8px;padding:12px 14px;box-shadow:0 1px 3px #0001}.card h3{margin:0 0 4px;font-size:12px;color:var(--mut);font-weight:600}
+.card .v{font-size:22px;font-weight:700}table{width:100%;border-collapse:collapse;background:var(--card);border-radius:8px;overflow:hidden}
+th{background:#eef2f9;text-align:left;padding:8px;font-size:12px;color:var(--mut)}td{padding:8px;border-top:1px solid #eef0f4}
+tr.click{cursor:pointer}tr.click:hover{background:#f6f9ff}
+.badge{padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
+.AUTO_DRAFT,.DRAFT_CREATED,.DRAFT_CREATED_AFTER_APPROVAL{background:var(--ok)}.ESCALATE,.ESCALATED_TICKET{background:var(--warn)}
+.BLOCK,.BLOCKED_TICKET,.REJECTED_TICKET,.DRAFT_FAILED{background:var(--bad)}.HITL_REVIEW,.AWAITING_REVIEW{background:var(--hitl)}
+.bar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+button{background:var(--pri);color:#fff;border:0;border-radius:6px;padding:7px 14px;cursor:pointer;font-weight:600}
+button.ok{background:var(--ok)}button.bad{background:var(--bad)}button.ghost{background:#fff;color:var(--pri);border:1px solid var(--pri)}
+button:disabled{opacity:.5;cursor:not-allowed}select,textarea,input{padding:6px;border:1px solid #cfd6e4;border-radius:6px;font:inherit}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.warn{background:#fff4e0;border-left:4px solid var(--warn);padding:8px 12px;border-radius:4px;margin:8px 0}
+.var{font-weight:700}.var.hi{color:var(--bad)}.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.err{background:#fdecea;color:var(--bad);padding:8px 12px;border-radius:6px;margin-bottom:10px}

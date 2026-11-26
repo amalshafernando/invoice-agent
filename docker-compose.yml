@@ -1,0 +1,29 @@
+services:
+  erp:
+    build: ./backend
+    command: uvicorn app.mock_erp.main:app --host 0.0.0.0 --port 8001
+    environment: { JWT_SECRET: "${JWT_SECRET:-dev-only-change-me}" }
+    volumes: [ "erpdata:/app/data" ]
+  mcp:
+    build: ./backend
+    command: uvicorn app.mcp_server.server:app --host 0.0.0.0 --port 8002
+    environment: { JWT_SECRET: "${JWT_SECRET:-dev-only-change-me}", ERP_URL: "http://erp:8001" }
+    depends_on: [ erp ]
+  api:
+    build: ./backend
+    command: uvicorn app.api.main:app --host 0.0.0.0 --port 8000
+    environment:
+      JWT_SECRET: "${JWT_SECRET:-dev-only-change-me}"
+      ERP_URL: "http://erp:8001"
+      MCP_URL: "http://mcp:8002"
+      LLM_PROVIDER: "${LLM_PROVIDER:-fake}"      # set to langchain + MODEL_CHEAP/MODEL_STRONG + provider key
+      MODEL_CHEAP: "${MODEL_CHEAP:-}"
+      MODEL_STRONG: "${MODEL_STRONG:-}"
+      GOOGLE_API_KEY: "${GOOGLE_API_KEY:-}"
+    depends_on: [ mcp ]
+    volumes: [ "erpdata:/app/data" ]
+  web:
+    build: ./frontend
+    ports: [ "8080:80" ]
+    depends_on: [ api ]
+volumes: { erpdata: {} }
