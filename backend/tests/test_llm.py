@@ -22,6 +22,7 @@ def _make_text_pdf() -> bytes:
 
 def test_docling_service_returns_markdown(monkeypatch):
     monkeypatch.setattr(settings, "docling_url", "http://docling:5001/")
+    monkeypatch.setattr(settings, "hf_token", "")
     monkeypatch.setattr(settings, "docling_api_key", "docling-test-key")
     monkeypatch.setattr(settings, "docling_timeout_s", 45)
     response = httpx.Response(
@@ -43,6 +44,30 @@ def test_docling_service_returns_markdown(monkeypatch):
     }
     assert kwargs["headers"] == {"X-Api-Key": "docling-test-key"}
     assert kwargs["timeout"] == 45
+
+
+def test_docling_huggingface_endpoint_uses_bearer_token(monkeypatch):
+    monkeypatch.setattr(
+        settings, "docling_url", "https://docling.example.endpoints.huggingface.cloud"
+    )
+    monkeypatch.setattr(settings, "hf_token", "hf-test-token")
+    monkeypatch.setattr(settings, "docling_api_key", "")
+    response = httpx.Response(
+        200,
+        json={"status": "success", "document": {"md_content": "# Invoice"}},
+        request=httpx.Request(
+            "POST",
+            "https://docling.example.endpoints.huggingface.cloud/v1/convert/file",
+        ),
+    )
+    post = Mock(return_value=response)
+    monkeypatch.setattr("app.agent.llm.httpx.post", post)
+
+    llm = LangChainLLM.__new__(LangChainLLM)
+    assert llm._extract_pdf_text(b"%PDF") == "# Invoice"
+    assert post.call_args.kwargs["headers"] == {
+        "Authorization": "Bearer hf-test-token"
+    }
 
 
 def test_langchain_receives_docling_text_not_pdf(monkeypatch):

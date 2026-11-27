@@ -12,10 +12,9 @@ Docker: `docker compose up --build` -> UI on http://localhost:8080 (compose file
 Real LLMs: `LLM_PROVIDER=langchain MODEL_CHEAP=... MODEL_STRONG=...` + provider key.
 
 PDF extraction with Docling Serve:
-1. Start the Docling Serve CPU container (the image includes Docling and its model assets):
-   `docker run --rm -p 5001:5001 ghcr.io/docling-project/docling-serve-cpu:latest`
-2. Set `LLM_PROVIDER=langchain`, the two LangChain model settings, and the provider API key in the root `.env`.
-3. For a locally running backend, `DOCLING_URL` defaults to `http://127.0.0.1:5001`. With Docker Compose, it defaults to `http://host.docker.internal:5001` so the API container can reach the service running on the host.
-4. Optionally set `DOCLING_API_KEY` and `DOCLING_TIMEOUT_S` if the Docling service requires an API key or more conversion time.
+1. Run Docling Serve locally with `docker run --rm -p 5001:5001 ghcr.io/docling-project/docling-serve-cpu:latest`, or deploy Docling Serve as a custom container on a Hugging Face Inference Endpoint.
+2. Set `LLM_PROVIDER=langchain`, the two LangChain model settings, and the LLM provider API key in the root `.env`.
+3. Set `DOCLING_URL` to the Docling Serve base URL (for example, `http://127.0.0.1:5001` locally, `http://host.docker.internal:5001` from Docker Compose, or the Hugging Face Inference Endpoint URL). The application appends `/v1/convert/file`.
+4. For a protected Hugging Face Inference Endpoint, set `HF_TOKEN` in the root `.env`; Docker Compose passes it to the API container and the application sends it as a Bearer token. Set `DOCLING_URL` to the endpoint's URL, for example `https://<your-endpoint>.endpoints.huggingface.cloud` (not the model repository URL). `DOCLING_API_KEY` remains available for Docling Serve instances configured with their own API key. Set `DOCLING_TIMEOUT_S` if conversion needs more time.
 
-`docling-project/docling-models` contains model assets, not an HTTP service. Docling Serve exposes the `/v1/convert/file` API; the application sends the returned Markdown to LangChain for structured invoice extraction. The CPU image is several gigabytes and downloads on first use.
+`https://huggingface.co/docling-project/docling-models` is a model-assets repository, not a document-conversion API. A Hugging Face endpoint must actually run Docling Serve and expose its `/v1/convert/file` API; setting `DOCLING_URL` to the model-repository page will not work. The application sends converted Markdown to LangChain for structured invoice extraction.
