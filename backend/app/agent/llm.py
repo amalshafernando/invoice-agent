@@ -97,6 +97,8 @@ class LangChainLLM:
         """Extract text from PDF using Docling Serve, falling back to pypdf."""
         # --- Attempt 1: Docling Serve (OCR-capable, higher quality) ---
         headers = {}
+        if settings.hf_token:
+            headers["Authorization"] = f"Bearer {settings.hf_token}"
         if settings.docling_api_key:
             headers["X-Api-Key"] = settings.docling_api_key
 

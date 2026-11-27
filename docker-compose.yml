@@ -11,7 +11,7 @@ services:
     depends_on: [ erp ]
   api:
     build: ./backend
-    command: uvicorn app.api.main:app --host 0.0.0.0 --port 8000
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     environment:
       JWT_SECRET: "${JWT_SECRET:-dev-only-change-me}"
       ERP_URL: "http://erp:8001"
@@ -23,6 +23,7 @@ services:
       GROQ_API_KEY: "${GROQ_API_KEY:-}"
       DOCLING_URL: "${DOCLING_URL:-http://host.docker.internal:5001}"
       DOCLING_API_KEY: "${DOCLING_API_KEY:-}"
+      HF_TOKEN: "${HF_TOKEN:-}"
       DOCLING_TIMEOUT_S: "${DOCLING_TIMEOUT_S:-120}"
     depends_on: [ mcp ]
     volumes: [ "erpdata:/app/data" ]
